@@ -1,3 +1,4 @@
+require 'json'
 require_relative 'view'
 
 module Simpler
@@ -15,7 +16,6 @@ module Simpler
       @request.env['simpler.controller'] = self
       @request.env['simpler.action'] = action
 
-      set_default_headers
       send(action)
       write_response
 
@@ -28,10 +28,6 @@ module Simpler
       self.class.name.match('(?<name>.+)Controller')[:name].downcase
     end
 
-    def set_default_headers
-      @response['Content-Type'] = 'text/html'
-    end
-
     def write_response
       body = render_body
 
@@ -39,15 +35,27 @@ module Simpler
     end
 
     def render_body
-      View.new(@request.env).render(binding)
+      template = @request.env['simpler.template']
+      renderer = View.get_renderer(template)
+      @response['Content-Type'] = View.get_header(template)
+
+      renderer.new(@request.env).render(binding)
     end
 
     def params
-      @request.params
+      @request.env['simpler.params'].update(@request.params)
     end
 
     def render(template)
       @request.env['simpler.template'] = template
+    end
+
+    def status(code)
+      @response.status = code
+    end
+
+    def header
+      @response
     end
 
   end
