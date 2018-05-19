@@ -16,7 +16,6 @@ module Simpler
       @request.env['simpler.controller'] = self
       @request.env['simpler.action'] = action
 
-      set_default_headers
       send(action)
       write_response
 
@@ -29,10 +28,6 @@ module Simpler
       self.class.name.match('(?<name>.+)Controller')[:name].downcase
     end
 
-    def set_default_headers
-      @response['Content-Type'] = 'text/html'
-    end
-
     def write_response
       body = render_body
 
@@ -41,12 +36,10 @@ module Simpler
 
     def render_body
       template = @request.env['simpler.template']
+      renderer = View.get_renderer(template)
+      @response['Content-Type'] = View.get_header(template)
 
-      if template && template.is_a?(Hash)
-        send(template.keys.first, template)
-      else
-        View.new(@request.env).render(binding)
-      end
+      renderer.new(@request.env).render(binding)
     end
 
     def params
@@ -55,16 +48,6 @@ module Simpler
 
     def render(template)
       @request.env['simpler.template'] = template
-    end
-
-    def plain(template)
-      @response['Content-Type'] = 'text/plain'
-      template[:plain]
-    end
-
-    def json(template)
-      @response['Content-Type'] = 'application/json'
-      template[:json].to_json
     end
 
     def status(code)

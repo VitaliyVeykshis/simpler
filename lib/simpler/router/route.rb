@@ -34,19 +34,15 @@ module Simpler
       end
 
       def valid_unit?(route_unit, request_unit)
-        parameter!(route_unit, request_unit) || route_unit.match(request_unit)
+        set_parameter(route_unit, request_unit) || route_unit.match(request_unit)
       end
 
-      def parameter!(name, value)
-        @params[to_symbol(name)] = value if parameter?(name)
+      def set_parameter(name, value)
+        @params[name[1..-1]].to_sym = value if parameter?(name)
       end
 
       def parameter?(name)
         name[0] == ':'
-      end
-
-      def to_symbol(name)
-        name[1..-1].to_sym
       end
 
     end

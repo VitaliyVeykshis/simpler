@@ -1,32 +1,32 @@
 require 'fileutils'
+require 'logger'
 
 class AppLogger
 
-  LOGFILE_PATH = 'log/app.log'.freeze
-
-  def initialize(app)
+  def initialize(app, logfile_path)
     @app = app
+    @logfile_path = logfile_path
     initialize_logfile!
+    @logger = Logger.new(logfile_path)
   end
 
   def call(env)
     status, headers, response = @app.call(env)
-    log = message(env, status, headers)
-    File.open(LOGFILE_PATH, 'a+') { |file| file.write(log) }
+    @logger.info message(env, status, headers)
     [status, headers, response]
   end
 
   private
 
   def message(env, status, headers)
-    "Request: #{env['REQUEST_METHOD']} #{env['REQUEST_URI']}\n" \
+    "\nRequest: #{env['REQUEST_METHOD']} #{env['REQUEST_URI']}\n" \
     "Handler: #{env['simpler.controller'].class}##{env['simpler.action']}\n" \
     "Parameters: #{env['simpler.params']}\n" \
     "Response: #{status} #{headers['Content-Type']} #{env['simpler.render_view']}\n" \
   end
 
   def initialize_logfile!
-    directory_name = File.dirname(LOGFILE_PATH)
+    directory_name = File.dirname(@logfile_path)
 
     FileUtils.mkdir_p(directory_name) unless File.directory?(directory_name)
   end
